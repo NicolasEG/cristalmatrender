@@ -1,6 +1,6 @@
 # CRISTALMAT
 
-Sitio web estático completo. Incluye inicio, servicios y contacto, imágenes, catálogo de Garden Blocks, carrusel infinito, animaciones de scroll y modal para ampliar las imágenes.
+Sitio web estático completo. Incluye inicio simplificado, servicios y contacto, hero distinto para escritorio y celular, catálogo de Garden Blocks, carrusel infinito, animaciones de scroll, títulos animados y modal para ampliar las imágenes.
 
 ## Subir a GitHub
 
