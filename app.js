@@ -74,5 +74,7 @@ if(modelSelect){
  document.querySelector('#model-next').addEventListener('click',()=>{chooseModel(selectedModel+1);mobileScroll(modelSelect)});
  mainButton.addEventListener('click',()=>{photoTrigger=mainButton;photoDialog.querySelector('img').src=image.src;photoDialog.querySelector('img').alt=image.alt;photoDialog.querySelector('.photo-caption').textContent=image.alt;document.body.classList.add('modal-open');photoDialog.showModal()});
  mainButton.addEventListener('keydown',e=>{if(e.key==='ArrowRight'||e.key==='ArrowLeft'){e.preventDefault();showImage(selectedImage+(e.key==='ArrowRight'?1:-1))}});
- chooseModel(0);
+ const modelId=new URLSearchParams(location.search).get("modelo");
+ const initialModel=["rombo","cribada-7","cribada-6","holanda-8","holanda-6"].indexOf(modelId);
+ chooseModel(initialModel>=0?initialModel:0);
 }
