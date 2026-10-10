@@ -41,7 +41,29 @@ if(modelSelect){
   {name:'Adoquín Holanda 8 cm',measures:'20 × 10 × 8',weight:'3,5',quantity:'50',price:'26.365',piece:'holanda-8-producto.png',description:'Líneas simples y distintos patrones de colocación.',works:['holanda-obra.png'],pattern:'holanda-patrones.png'},
   {name:'Adoquín Holanda 6 cm',measures:'20 × 10 × 6',weight:'2,6',quantity:'50',price:'23.550',piece:'holanda-6-producto.png',description:'El diseño clásico del adoquín, para darle forma a tu espacio.',works:['holanda-obra.png'],pattern:'holanda-patrones.png'}
  ];
- let selectedModel=0,selectedImage=0;
+ let selectedModel=0,selectedImage=0,category='garden';
+ const categoryIndices=()=>category==='garden'?[0,1,2]:[3,4];
+ const money=n=>new Intl.NumberFormat('es-AR',{style:'currency',currency:'ARS',maximumFractionDigits:2}).format(n);
+ const price=m=>Number(m.price.replaceAll('.',''));
+ const areaInput=document.querySelector('#quote-area');
+ let basket=[];
+ try{basket=JSON.parse(localStorage.getItem('cristalmat-quote-v1')||'[]').filter(x=>Number.isInteger(x.model)&&models[x.model]&&Number.isFinite(x.area)&&x.area>0&&x.area<=100000)}catch{}
+ function updateEstimate(){const area=Number(areaInput.value),valid=areaInput.validity.valid&&area>0,m=models[selectedModel];document.querySelector('#quote-subtotal').textContent=valid?money(area*price(m)):'—';document.querySelector('#quote-units').textContent=valid?Math.ceil(area*Number(m.quantity.replace(',','.')))+' piezas estimadas · '+new Intl.NumberFormat('es-AR').format(area)+' m²':'Ingresá la superficie para calcular.'}
+ function renderBasket(){
+  try{localStorage.setItem('cristalmat-quote-v1',JSON.stringify(basket))}catch{}
+  const list=document.querySelector('#quote-items');list.replaceChildren();let total=0;
+  basket.forEach((item,i)=>{const m=models[item.model],subtotal=item.area*price(m);total+=subtotal;const row=document.createElement('div');row.className='quote-row';const img=document.createElement('img');img.src='assets/'+m.piece;img.alt='';const text=document.createElement('div');const title=document.createElement('strong');title.textContent=m.name;const detail=document.createElement('small');detail.textContent=item.area.toLocaleString('es-AR')+' m² × '+money(price(m))+' / m²';text.append(title,detail);const amount=document.createElement('strong');amount.textContent=money(subtotal);const remove=document.createElement('button');remove.type='button';remove.textContent='×';remove.setAttribute('aria-label','Quitar '+m.name);remove.addEventListener('click',()=>{basket.splice(i,1);renderBasket()});row.append(img,text,amount,remove);list.append(row)});
+  if(!basket.length){const p=document.createElement('p');p.className='quote-empty';p.textContent='Elegí un modelo e ingresá los m². Podés combinar varios materiales.';list.append(p)}
+  document.querySelector('#quote-count').textContent=basket.length;document.querySelector('#quote-total').textContent=money(total);document.querySelector('#quote-clear').hidden=!basket.length;
+  const send=document.querySelector('#quote-send');send.setAttribute('aria-disabled',String(!basket.length));
+  if(basket.length){const message='Hola CRISTALMAT, quiero consultar este presupuesto:\n'+basket.map(x=>models[x.model].name+' · '+x.area.toLocaleString('es-AR')+' m² · '+money(x.area*price(models[x.model]))).join('\n')+'\nTotal estimado de materiales: '+money(total)+'\nLocalidad: '+(document.querySelector('#quote-locality').value||'a confirmar')+'\nQuisiera confirmar precios, disponibilidad y consultar envío y colocación.';send.href='https://wa.me/5491157467538?text='+encodeURIComponent(message);send.target='_blank';send.rel='noopener'}else send.removeAttribute('href');
+ }
+ areaInput.addEventListener('input',updateEstimate);
+ document.querySelector('#quote-form').addEventListener('submit',e=>{e.preventDefault();if(!areaInput.reportValidity())return;const area=Number(areaInput.value),existing=basket.find(x=>x.model===selectedModel);if(existing){existing.area=Math.round((existing.area+area)*100)/100}else basket.push({model:selectedModel,area});renderBasket();document.querySelector('#quote-status').textContent=models[selectedModel].name+' agregado al presupuesto.';document.querySelector('.quote-summary').scrollIntoView({block:'center',behavior:reducedMotion.matches?'instant':'smooth'})});
+ document.querySelector('#quote-clear').addEventListener('click',()=>{basket=[];renderBasket();document.querySelector('#quote-status').textContent='Presupuesto vacío.'});
+ document.querySelector('#quote-locality').addEventListener('input',renderBasket);renderBasket();
+ function chooseCategory(next,scroll=false){category=next;document.querySelectorAll('[data-category]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.category===category)));const pool=category==='piscinas';document.querySelector('.pool-consult').hidden=!pool;document.querySelector('.rombo-feature').hidden=pool;document.querySelector('.model-picker').hidden=pool;document.querySelector('.model-guide').hidden=pool;if(!pool){const indices=categoryIndices(),buttons=document.querySelector('.model-buttons');buttons.replaceChildren();modelSelect.replaceChildren();indices.forEach(i=>{const m=models[i],option=document.createElement('option');option.value=i;option.textContent=m.name;modelSelect.append(option);const b=document.createElement('button');b.type='button';b.dataset.model=i;b.innerHTML='<img src="assets/'+m.piece+'" alt=""><span>'+m.name+'</span><small>'+money(price(m))+' / m²</small>';b.addEventListener('click',()=>chooseModel(i));buttons.append(b)});chooseModel(indices[0])}if(scroll)document.querySelector(pool?'.pool-consult':'.model-picker').scrollIntoView({block:'start',behavior:reducedMotion.matches?'instant':'smooth'})}
+ document.querySelectorAll('[data-category]').forEach(b=>b.addEventListener('click',()=>chooseCategory(b.dataset.category,true)));
  const image=document.querySelector('#model-image'),mainButton=document.querySelector('.model-main-image'),thumbs=document.querySelector('.model-thumbs');
  const imageList=()=>{const m=models[selectedModel];return [{file:m.piece,type:'piece',caption:`Pieza de hormigón · ${m.name}`},...m.works.map((file,i)=>({file,type:'works',caption:`${m.name} · Obra finalizada${m.works.length>1?' '+(i+1):''}`})),...(m.pattern?[{file:m.pattern,type:'pattern',caption:`${m.name} · Patrón de colocación`}]:[])]};
  function showImage(index){
@@ -62,7 +84,7 @@ if(modelSelect){
   document.querySelector('#model-reinforcement').hidden=!m.reinforced;
   document.querySelector('[data-model-view="pattern"]').hidden=!m.pattern;
   const quote=document.querySelector('#model-quote');quote.textContent='Cotizar '+m.name;quote.href='https://wa.me/5491157467538?text='+encodeURIComponent(`Hola CRISTALMAT, quiero cotizar ${m.name}, medidas ${m.measures} cm.`);
-  document.querySelector('#model-counter').textContent=`${selectedModel+1} / ${models.length}`;
+  document.querySelector('#model-counter').textContent=`${categoryIndices().indexOf(selectedModel)+1} / ${categoryIndices().length}`;updateEstimate();
   thumbs.replaceChildren();imageList().forEach((entry,i)=>{const b=document.createElement('button'),img=document.createElement('img');b.type='button';b.setAttribute('aria-label',entry.caption);b.setAttribute('aria-pressed',String(i===0));img.src='assets/'+entry.file;img.alt='';b.append(img);b.addEventListener('click',()=>showImage(i));thumbs.append(b)});
   showImage(0);
  }
@@ -70,11 +92,12 @@ if(modelSelect){
  document.querySelectorAll('[data-model]').forEach(b=>b.addEventListener('click',()=>chooseModel(Number(b.dataset.model))));
  const mobileScroll=target=>{if(window.matchMedia('(max-width:650px)').matches)target.scrollIntoView({block:'center',behavior:reducedMotion.matches?'instant':'smooth'})};
  document.querySelectorAll('[data-model-view]').forEach(b=>b.addEventListener('click',()=>{const index=imageList().findIndex(entry=>entry.type===b.dataset.modelView);if(index>=0){showImage(index);mobileScroll(mainButton)}}));
- document.querySelector('#model-prev').addEventListener('click',()=>{chooseModel(selectedModel-1);mobileScroll(modelSelect)});
- document.querySelector('#model-next').addEventListener('click',()=>{chooseModel(selectedModel+1);mobileScroll(modelSelect)});
+ document.querySelector('#model-prev').addEventListener('click',()=>{chooseModel(categoryIndices()[(categoryIndices().indexOf(selectedModel)+categoryIndices().length-1)%categoryIndices().length]);mobileScroll(modelSelect)});
+ document.querySelector('#model-next').addEventListener('click',()=>{chooseModel(categoryIndices()[(categoryIndices().indexOf(selectedModel)+1)%categoryIndices().length]);mobileScroll(modelSelect)});
  mainButton.addEventListener('click',()=>{photoTrigger=mainButton;photoDialog.querySelector('img').src=image.src;photoDialog.querySelector('img').alt=image.alt;photoDialog.querySelector('.photo-caption').textContent=image.alt;document.body.classList.add('modal-open');photoDialog.showModal()});
  mainButton.addEventListener('keydown',e=>{if(e.key==='ArrowRight'||e.key==='ArrowLeft'){e.preventDefault();showImage(selectedImage+(e.key==='ArrowRight'?1:-1))}});
  const modelId=new URLSearchParams(location.search).get("modelo");
  const initialModel=["rombo","cribada-7","cribada-6","holanda-8","holanda-6"].indexOf(modelId);
- chooseModel(initialModel>=0?initialModel:0);
+ const requestedCategory=new URLSearchParams(location.search).get('categoria');chooseCategory(['garden','adoquines','piscinas'].includes(requestedCategory)?requestedCategory:(initialModel>=3?'adoquines':'garden'));if(initialModel>=0)chooseModel(initialModel);
 }
+
