@@ -23,7 +23,7 @@ No requiere instalación ni compilación. También se puede subir a cualquier ho
 
 ## Contacto y recursos
 
-WhatsApp: +54 9 11 5746-7538. Instagram: @cristalmat_ok. Dirección: Córdoba 2675, Bella Vista, San Miguel, Buenos Aires.
+WhatsApp: +54 9 11 81257791. Instagram: @cristalmat_ok. Dirección: Córdoba 2675, Bella Vista, San Miguel, Buenos Aires.
 
 El formulario prepara un mensaje en WhatsApp; el visitante confirma su envío allí. No necesita un servidor ni almacena consultas.
 
